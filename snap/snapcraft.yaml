@@ -31,14 +31,6 @@ parts:
     organize:
       install-config: snap/hooks/install  
   
-  zixi:
-    plugin: dump
-    source: 
-      - to amd64: ./zixi_linux.tar.gz
-    organize: 
-      'Linux/*.so*' : usr/lib/
-    stage: [ usr/lib/libzixiFeeder.so, usr/lib/libzixiClient.so ]
-
   locales-launch:
     source: https://github.com/Lin-Buo-Ren/locales-launch.git
     source-tag: v1.0.0
@@ -63,6 +55,18 @@ parts:
       - usr/share/doc/locales
       - usr/share/i18n
       - usr/share/locale
+    
+  zixi:
+    plugin: dump
+    source: 
+      - on amd64: ./zixi_linux.tar.gz
+    override-build: |
+      if [ "$SNAP_ARCH" = "amd64" ]; then
+        mkdir --parents $SNAPCRAFT_PART_INSTALL/usr/lib
+        mv ./Linux/*.so $SNAPCRAFT_PART_INSTALL/usr/lib
+      fi
+    organize: 
+      'Linux/*.so*' : usr/lib/
 
 apps:
   hlsserver:
