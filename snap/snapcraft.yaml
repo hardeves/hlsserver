@@ -20,7 +20,7 @@ parts:
       - to armhf: ./arm/hlsserver
       - to amd64: ./x64/hlsserver
     organize: 
-      '*' : ./hlsserver
+      '*' : ./hlsserver/
     stage-packages: 
       - openssl
 
