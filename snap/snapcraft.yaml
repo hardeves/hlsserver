@@ -22,7 +22,7 @@ parts:
     organize: 
       '*' : ./hlsserver
     stage-packages: 
-      - openssl1.1
+      - openssl
 
 
   install-hook:
