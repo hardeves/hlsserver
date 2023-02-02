@@ -34,7 +34,7 @@ parts:
   zixi:
     plugin: dump
     source: 
-      - on amd64: ./zixi_linux.tar.gz
+      - to amd64: ./zixi_linux.tar.gz
     organize: 
       'Linux/*.so*' : usr/lib/
     stage: [ usr/lib/libzixiFeeder.so, usr/lib/libzixiClient.so ]
