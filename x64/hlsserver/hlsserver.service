@@ -1,0 +1,17 @@
+[Unit]
+Description=HLSServer
+Wants=network-online.target
+After=network-online.target NetworkManager.service telegraf.service
+
+[Service]
+ExecStart=/home/ubuntu/hlsserver/HLSServer /home/ubuntu/hlsserver/hlsserver.conf
+Restart=always
+User=ubuntu
+# Note Debian/Ubuntu uses 'nogroup', RHEL/Fedora uses 'nobody'
+Group=nogroup
+Environment=PATH=/usr/bin:/usr/local/bin:/snap/bin
+WorkingDirectory=/home/ubuntu/hlsserver
+
+[Install]
+Alias=hlsserver.service
+WantedBy=multi-user.target

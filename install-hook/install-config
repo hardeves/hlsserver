@@ -1,0 +1,4 @@
+#!/bin/sh
+if [ ! -d $SNAP_COMMON/hlsserver.conf ]; then
+    cp $SNAP/hlsserver/hlsserver.conf $SNAP_COMMON/hlsserver.conf
+fi

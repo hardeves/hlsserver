@@ -1,0 +1,82 @@
+{
+	"description": "Transcoder: Receive stream over IP, transcode (or copy) and stream to output",
+	"variables": {
+		"general": {
+			"alarmcollector_url": "#ALARMCOLLECTOR_URL#",
+			"alarmcollector_serviceID": "#ALARMCOLLECTOR_SERVICEID#",
+			"alarmnode_url": "#ALARMNODE_URL#",
+			"alarmreportinginterval": "#ALARMREPORTINGINTERVAL#",
+			"logger_console": "#LOGGER_CONSOLE#",
+			"logger_level": "#LOGGER_LEVEL#",
+			"keepAlive": "#KEEPALIVE#",
+			"autoStart": "#AUTOSTART#",
+			"persistent": "#PERSISTENT#",
+			"name": "#NAME#",
+			"probename": "#PROBENAME#",
+			"ownerID": "#OWNERID#"
+		},
+		"inputs": [
+			{}
+		],
+		"outputs": [
+			{
+				"Transcoder": {
+					"inputURL": "#TRANSCODER_INPUTURL#",
+					"outputURL": "#TRANSCODER_OUTPUTURL#",
+					"localInterface": "#TRANSCODER_LOCALINTERFACE#",
+					"bitrateVideo": "#TRANSCODER_BITRATEVIDEO#",
+					"resolutionVideo": "#TRANSCODER_RESOLUTIONVIDEO#",
+					"vcodec": "#TRANSCODER_VCODEC#",
+					"acodec": "#TRANSCODER_ACODEC#",
+					"bitrateAudio": "#TRANSCODER_BITRATEAUDIO#",
+					"sampleRate": "#TRANSCODER_SAMPLERATE#",
+					"profile": "#TRANSCODER_VIDEOQUALITY#",
+					"outputScheme": "#TRANSCODER_OUTPUTSCHEME#",
+					"gopSize": "#TRANSCODER_GOPSIZE#"
+				}
+			}
+		],
+		"plugins": []
+	},
+	"config": {
+		"general": {
+			"subType": "Transcoder",
+			"majorType": "Gateway",
+			"alarmcollector_url": "#ALARMCOLLECTOR_URL#",
+			"alarmcollector_serviceID": "#ALARMCOLLECTOR_SERVICEID#",
+			"alarmnode_url": "#ALARMNODE_URL#",
+			"alarmreportinginterval": "#ALARMREPORTINGINTERVAL#",
+			"logger_console": "#LOGGER_CONSOLE#",
+			"logger_level": "#LOGGER_LEVEL#",
+			"keepAlive": "#KEEPALIVE#",
+			"autoStart": "#AUTOSTART#",
+			"persistent": "#PERSISTENT#",
+			"name": "#NAME#",
+			"probename": "#PROBENAME#",
+			"ownerID": "#OWNERID#"
+		},
+		"inputs": [],
+		"outputs": [
+			{
+				"name": "Transcoder",
+				"type": "Transcoder",
+				"attributes": {
+					"inputURL": "#TRANSCODER_INPUTURL#",
+					"outputURL": "#TRANSCODER_OUTPUTURL#",
+					"localInterface": "#TRANSCODER_LOCALINTERFACE#",
+					"bitrateVideo": "#TRANSCODER_BITRATEVIDEO#",
+					"resolutionVideo": "#TRANSCODER_RESOLUTIONVIDEO#",
+			  		"vcodec": "#TRANSCODER_VCODEC#",
+					"acodec": "#TRANSCODER_AVCODEC#",		
+					"bitrateAudio": "#TRANSCODER_BITRATEAUDIO#",
+					"sampleRate": "#TRANSCODER_SAMPLERATE#",
+					"profile": "#TRANSCODER_VIDEOQUALITY#",
+					"outputScheme": "#TRANSCODER_OUTPUTSCHEME#",
+					"gopSize": "#TRANSCODER_GOPSIZE#"
+				}
+			}
+		],
+		"plugins": [],
+		"connections": []
+	}
+}

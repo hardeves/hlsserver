@@ -1,0 +1,81 @@
+name: hlsserver # you probably want to 'snapcraft register <name>'
+base: core22 # the base snap is the execution environment for this snap
+version: 'master' # just for humans, typically '1.2+git' or '1.3.2'
+summary: HLSServer
+description: |
+  Simple HLS Server used for testing purposes
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+architectures:
+  - build-on: amd64
+    build-for: amd64
+  - build-on: amd64
+    build-for: armhf
+
+parts:
+  hlsserver:
+    plugin: dump
+    source: 
+      - to armhf: ./arm/hlsserver
+      - to amd64: ./x64/hlsserver
+    organize: 
+      '*' : ./hlsserver
+    stage-packages: 
+      - openssl1.1
+
+
+  install-hook:
+    plugin: dump
+    source: install-hook/
+    organize:
+      install-config: snap/hooks/install  
+  
+  zixi:
+    plugin: dump
+    source: 
+      - on amd64: ./zixi_linux.tar.gz
+    organize: 
+      'Linux/*.so*' : usr/lib/
+    stage: [ usr/lib/libzixiFeeder.so, usr/lib/libzixiClient.so ]
+
+  locales-launch:
+    source: https://github.com/Lin-Buo-Ren/locales-launch.git
+    source-tag: v1.0.0
+    plugin: dump
+    stage-packages:
+      # For localedef(1)
+      - libc-bin
+      # For locale data used by localedef(1)
+      - locales
+      # All pre-generated locale data
+      # DISABLED: Lots of duplicate data will be included in snap when this is staged, unless the target machine has no resource to generate them in runtime otherwise not using it
+      #
+      #   Lack of compiled locales breaks gettext based localisation - snapcraft - snapcraft.io
+      #   https://forum.snapcraft.io/t/lack-of-compiled-locales-breaks-gettext-based-localisation/3758
+      #
+      # - locales-all
+
+    stage:
+      - bin/locales-launch
+      - etc/locale.alias
+      - usr/bin/localedef
+      - usr/share/doc/locales
+      - usr/share/i18n
+      - usr/share/locale
+
+apps:
+  hlsserver:
+    command: hlsserver/HLSServer $SNAP_COMMON/hlsserver.conf
+    daemon: simple
+    plugs:
+    - network
+    - network-bind
+
+layout:
+  /var/log/hlsserver:
+    bind: $SNAP_DATA/var/log/hlsserver
+  /var/local/hlsserver:
+    bind: $SNAP_DATA/var/local/hlsserver
+  /var/tmp:
+    bind: $SNAP_DATA/var/tmp

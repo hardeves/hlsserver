@@ -1,0 +1,132 @@
+{
+	"description": "File2IPGateway: Read from .ts file and send the TS over IP via calculated TS rate",
+	"variables": {
+		"general": {
+			"alarmcollector_url": "#ALARMCOLLECTOR_URL#",
+			"alarmcollector_serviceID": "#ALARMCOLLECTOR_SERVICEID#",
+			"alarmnode_url": "#ALARMNODE_URL#",
+			"alarmreportinginterval": "#ALARMREPORTINGINTERVAL#",
+			"logger_console": "#LOGGER_CONSOLE#",
+			"logger_level": "#LOGGER_LEVEL#",
+			"keepAlive": "#KEEPALIVE#",
+			"autoStart": "#AUTOSTART#",
+			"persistent": "#PERSISTENT#",
+			"name": "#NAME#",
+			"probename": "#PROBENAME#",
+			"ownerID": "#OWNERID#"
+		},
+		"inputs": [{
+			"FileIn": {
+				"fileName": "#FILE_NAME#",
+				"rewind": "#FILEIN_REWIND#"
+			}
+		}],
+		"outputs": [{
+			"UDPOutput": {				
+				"outputPort": "#UDPOUTPUT_OUTPUTPORT#",
+				"outputAddress": "#HUDPOUTPUT_OUTPUTADDRESS#",
+				"localInterface": "#UDPOUTPUT_LOCALINTERFACE#",
+				"TTL": "#UDPOUTPUT_TTL#"
+			}	
+		}],
+		"plugins": [{
+			"BufferOut": {
+				"bitrateUse": "#BUFFEROUT_BITRATEUSE",
+				"bitrateTarget": "#BUFFEROUT_BITRATETARGET"
+			}
+		}]
+	},"config": {
+		"general": {
+			"subType": "File2IPGateway",
+			"majorType": "Gateway",
+			"alarmcollector_url": "#ALARMCOLLECTOR_URL#",
+			"alarmcollector_serviceID": "#ALARMCOLLECTOR_SERVICEID#",
+			"alarmnode_url": "#ALARMNODE_URL#",
+			"alarmreportinginterval": "#ALARMREPORTINGINTERVAL#",
+			"logger_console": "#LOGGER_CONSOLE#",
+			"logger_level": "#LOGGER_LEVEL#",
+			"keepAlive": "#KEEPALIVE#",
+			"autoStart": "#AUTOSTART#",
+			"persistent": "#PERSISTENT#",
+			"name": "#NAME#",
+			"probename": "#PROBENAME#",
+			"ownerID": "#OWNERID#"
+		},
+		"inputs": [{
+			"name": "FileIn",
+			"type": "FileInput",
+			"attributes": {
+				"fileName": "#FILE_NAME#",
+				"rewind": "#FILEIN_REWIND#"
+			}
+		}],
+		"outputs": [{
+			"name": "UDPOutput",
+			"type": "UDPSender",
+			"attributes": {
+				"outputPort": "#UDPOUTPUT_OUTPUTPORT#",
+				"outputAddress": "#UDPOUTPUT_OUTPUTADDRESS#",
+				"localInterface": "#UDPOUTPUT_LOCALINTERFACE#",
+				"TTL": "#UDPOUTPUT_TTL#"
+			}
+		}],
+		"plugins": [{
+			"name": "TSAnalyzer",
+			"type": "TSAnalyzer",
+			"attributes": {
+				
+			}
+		},
+		{
+			"name": "BufferTS",
+			"type": "BufferPlugin",
+			"attributes": {
+				"nrBuffers": 5,
+				"packetSize": 188,
+				"nrPacketsInBuffer": 500,
+				"nrPacketsToSendAtOnce": 25,
+				"bitrateUse": "Bitrate_None",
+				"bitrateTarget": -1
+			}
+		},
+		{
+			"name": "BufferOut",
+			"type": "BufferPlugin",
+			"attributes": {
+				"nrBuffers": 5,
+				"packetSize": 188,
+				"nrPacketsInBuffer": 1500,
+				"nrPacketsToSendAtOnce": 7,
+				"bitrateUse": "#BUFFEROUT_BITRATEUSE",
+				"bitrateTarget": "#BUFFEROUT_BITRATETARGET"
+			}
+		},
+		{
+			"name": "ReportBitrateout",
+			"type": "BitrateCalculator",
+			"attributes": {
+				"reportingInterval": 60000
+			}
+		}],
+		"connections": [{
+			"from": "FileIn",
+			"to": "BufferTS"
+		},
+		{
+			"from": "BufferTS",
+			"to": "TSAnalyzer"
+		},
+		{
+			"from": "TSAnalyzer",
+			"to": "BufferOut"
+		},
+		{
+			"from": "BufferOut",
+			"to": "ReportBitrateout"
+		},
+		{
+			"from": "ReportBitrateout",
+			"to": "UDPOutput"
+		}]
+	}
+}

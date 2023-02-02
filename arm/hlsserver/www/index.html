@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>Dualz HLSServer</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/css/bootstrap.min.css">
+	<script src="/js/jquery.min.js"></script>
+	<script src="/js/bootstrap.bundle.min.js"></script>
+	<script src="/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="/js/dualz_mini.js"></script>
+	<link rel="stylesheet" href="/css/dualz_mini.css">
+	<link rel="shortcut icon" type="image/png" href="/favicon.png" />
+
+	<script>
+		var appState = 0b00000000000;
+		function StopStream(uniqueID) {
+            $.post("/",
+                stopCommand = '{ "command" : "removeApp", "uniqueID":' + uniqueID + '}',
+				function (data, status) {
+                    var json = JSON.parse(decodeURIComponent(data));
+                    showMessage(json, status);
+                    if (JSON.stringify(json).includes("succeeded")) {
+                        getPlayStatus();
+                    }
+                }, "text")
+
+		}
+        function deleteMedia(fileName) {
+            $.post("/",
+                stopCommand = '{ "command" : "deleteMedia", "fileName":"' + fileName + '"}',
+				function (data, status) {
+                    var json = JSON.parse(decodeURIComponent(data));
+                    showMessage(json, status);
+                    if (JSON.stringify(json).includes("succeeded")) {
+                        getPlayStatus();
+                    }
+                }, "text")
+
+        }
+		var showStatus = function (applications) {
+			$("#streams tr").slice(1).remove();
+			var table = $('#streams').find('tbody');
+
+			$.each(applications, function (index, value) {
+				var row = $('<tr class="row"></tr>');
+				var label = $('<td class="col-2 text-center">' + value.uniqueID + '</td>');
+				var val = $('<td class="col-2 text-center">' + value.status + '</td>');
+				let variables = value.variables;
+				var address = variables.find(record => record.name === "Transcoder_inputURL").value;
+				var localInterface = variables.find(record => record.name === "Transcoder_localInterface").value;
+				var interfaceCell = $('<td class="col-4 text-center">' + localInterface + '</td>');
+				var url = $('<td class="col-3 text-center">' + address + '</td>');
+				var stop = $('<td class="col-1 text-center"><button class="btn btn-danger" onclick=StopStream(' + value.uniqueID+') > Stop</td> ');
+				row.append(label, val, url, interfaceCell, stop);
+				table.append(row);
+			});
+		};
+        var showFileStatus = function (applications) {
+            $("#file_streams tr").slice(1).remove();
+            var table = $('#file_streams').find('tbody');
+
+            $.each(applications, function (index, value) {
+                var row = $('<tr class="row"></tr>');
+                var label = $('<td class="col-2 text-center">' + value.uniqueID + '</td>');
+                var val = $('<td class="col-3 text-center">' + value.status + '</td>');
+                let variables = value.variables;
+                var address = variables.find(record => record.name === "Transcoder_inputURL").value;
+                var url = $('<td class="col-4 text-center">' + address + '</td>');
+                var stop = $('<td class="col-3 text-center"><button class="btn btn-danger" onclick=StopStream(' + value.uniqueID + ') > Stop</td> ');
+                row.append(label, val, url, stop);
+                table.append(row);
+            });
+        };
+        var showCasterStatus = function (applications) {
+            $("#casters tr").slice(1).remove();
+            var table = $('#casters').find('tbody');
+
+            $.each(applications, function (index, value) {
+                var row = $('<tr class="row"></tr>');
+                let variables = value.variables;
+				var name = variables.find(record => record.name === "FileIn_fileName").value;
+				name = name.substring(8);
+				var local = variables.find(record => record.name === "UDPOutput_localInterface").value;
+                var bitrate = variables.find(record => record.name === "BufferOut_bitrateTarget").value;
+				var out = variables.find(record => record.name === "UDPOutput_outputAddress").value;
+				var port = variables.find(record => record.name === "UDPOutput_outputPort").value;
+				var file = $('<td class="col-2 text-center">' + name + '</td>');
+                var outCell = $('<td class="col-2 text-center">' + out + ':' + port + '</td>');
+                var bitrateCell = $('<td class="col-2 text-center">' + bitrate  + '</td>');
+                var val = $('<td class="col-2 text-center">' + value.status + '</td>');
+                var interface = $('<td class="col-2 text-center">' + local + '</td>');
+                var stop = $('<td class="col-1 text-center"><button class="btn btn-danger" onclick=StopStream(' + value.uniqueID + ') > Stop</td> ');
+                row.append(file, outCell, bitrateCell, val, interface, stop);
+                table.append(row);
+            });
+        };
+		var showFiles = function (applications) {
+			$("#files tr").slice(1).remove();
+			var table = $('#files').find('tbody');
+
+			$.each(applications, function (index, value) {
+				var row = $('<tr class="row"></tr>');
+				var name = $('<td class="col-4 text-center">' + value.name + '</td>');
+				var size = $('<td class="col-2 text-center">' + (value.size / 1024).toFixed(2) + 'kb</td>');
+				var date = $('<td class="col-4 text-center">' + value.date + '</td>');
+                var remove = $('<td class="col-1 text-center"><button class="btn btn-danger" onclick=deleteMedia("' + value.name + '") > Delete</td> ');
+                row.append(name, size, date, remove);
+				table.append(row);
+			});
+		};
+		var getStartCommand = function () {
+			startCommand = '{ "command" : "startTranscoding", "url":"' + $("#Input_URL").val().trim() +
+				'", "name": "' + $("#App_Name").val().trim() +
+				'", "localInterface": "' + $("#localInterfaces").val().trim() +
+				'", "videoCodec": "' + $("#videoCodec").val().trim() +
+				'", "audioCodec": "' + $("#audioCodec").val().trim() +
+				'"}';
+			return startCommand;
+		}
+        var getStartFileCommand = function () {
+            startCommand = '{ "command" : "startFileTranscoding", "filename":"' + $("#dropdownFiles4HLS").val().trim() +
+                '", "name": "' + $("#App_Name_file").val().trim() +
+                '", "videoCodec": "' + $("#videoCodecFile").val().trim() +
+                '", "audioCodec": "' + $("#audioCodecFile").val().trim() +
+                '"}';
+            return startCommand;
+        }
+		var addToDropDownFiles = function (files, fileDropdown) {
+            fileDropdown.empty();
+			$.each(files, function (index, value) {
+                var item = $('<option value="' + value.name + '">' + value.name + '</option>');
+                fileDropdown.append(item);
+			})
+		}
+        var filehlsupdater;
+        var getFileHLSPlayStatus = function () {
+            $.post("/",
+                '{ "command" : "getCurrentApps"}',
+				function (data, status) {
+                    var json = JSON.parse(decodeURIComponent(data));
+                    if (json.data && json.data.DualzApplications) {
+                        var hlsstreamers = json.data.DualzApplications.filter(item => item.subType == "Transcoder");
+                        if (hlsstreamers.length) {
+                            $("#curFileHLSStream").addClass("d-block");
+                            $("#curFileHLSStream").removeClass("d-none");
+                            showFileStatus(hlsstreamers);
+                        }
+                        else {
+                            $("#curFileHLSStream").addClass("d-none");
+                            $("#curFileHLSStream").removeClass("d-block");
+                        }
+                    }
+                }, "text");
+        }
+        var startFileHLSUpdating = function (data) {
+            filehlsupdater = setInterval(getFileHLSPlayStatus, 2000);
+        };
+        var stopFileHLSUpdating = function () {
+            clearInterval(filehlsupdater);
+        };
+		var updater;
+		var getPlayStatus = function () {
+			$.post("/",
+				'{ "command" : "getCurrentApps"}',
+				function (data, status) {
+                    var json = JSON.parse(decodeURIComponent(data));
+                    if (json.data && json.data.DualzApplications) {
+                        var hlsstreamers = json.data.DualzApplications.filter(item => item.subType == "Transcoder");
+						if (hlsstreamers.length) {
+							$("#curStream").addClass("d-block");
+							$("#curStream").removeClass("d-none");
+							showStatus(hlsstreamers);
+						}
+						else {
+							$("#curStream").addClass("d-none");
+							$("#curStream").removeClass("d-block");
+						}
+                    }
+                }, "text");
+		}
+		var startUpdating = function (data) {
+			updater = setInterval(getPlayStatus, 2000);
+		};
+        var stopUpdating = function () {
+            clearInterval(updater);
+        };
+		var mediaUpdater;
+		function getMedia(filesDropdown) {
+			$.post("/",
+				'{"command":"getMediaInfo"}',
+				function (data, status) {
+                    var json = JSON.parse(decodeURIComponent(data));
+                    if (json.data && json.data.mediaFiles && json.data.mediaFiles.length != 0) {
+                        addToDropDownFiles(json.data.mediaFiles, filesDropdown);
+					}
+                    else {
+                        filesDropdown.empty();
+                    }
+                }, "text")
+		}
+        function getMediaForView() {
+            $.post("/",
+                '{"command":"getMediaInfo"}',
+				function (data, status) {
+                    var json = JSON.parse(decodeURIComponent(data));
+                    if (json.data && json.data.mediaFiles && json.data.mediaFiles.length != 0) {
+                        $("#mediafiles").addClass("d-block");
+                        $("#mediafiles").removeClass("d-none");
+                        showFiles(json.data.mediaFiles);
+                    }
+                    else {
+                        $("#mediafiles").addClass("d-none");
+                        $("#mediafiles").removeClass("d-block");
+                    }
+                }, "text")
+        }
+		var curCasterUpdater;
+		function getCurCasters() {
+            $.post("/",
+                '{ "command" : "getCurrentApps"}',
+				function (data, status) {
+                    var json = JSON.parse(decodeURIComponent(data));
+                    if (json.data && json.data.DualzApplications) {
+                        var hlsstreamers = json.data.DualzApplications.filter(item => item.subType == "File2IPGateway");
+                        if (hlsstreamers.length) {
+                            $("#curCasters").addClass("d-block");
+                            $("#curCasters").removeClass("d-none");
+                            showCasterStatus(hlsstreamers);
+                        }
+                        else {
+                            $("#curCasters").addClass("d-none");
+                            $("#curCasters").removeClass("d-block");
+                        }
+                    }
+                }, "text");
+		}
+        var startCurCasters = function (data) {
+            curCasterUpdater = setInterval(getCurCasters, 2000);
+        };
+        var stopCurCasters = function () {
+            clearInterval(curCasterUpdater);
+        };
+		function StartMediaListUpdater() {
+			mediaUpdater = setInterval(getMediaForView, 2000);
+		};
+		function StopMediaListUpdater() {
+			clearInterval(mediaUpdater);
+		};
+		function respondToVisibility(element, callback) {
+			var targetNode = document.getElementById(element);
+			var observer = new MutationObserver(function (mutationsList, observer) {
+				callback(mutationsList, observer);
+			});
+			observer.observe(targetNode, { attributes: true, childList: true });
+		}
+	</script>
+	<script>
+		$(document).ready(function () {
+            getMedia($("#dropdownFiles4HLS"));
+            startFileHLSUpdating();
+			getLicenseInfo();
+            $("#setLicense").click(function () {
+                $.post("/",
+                    '{ "command" : "setLicense", "license":"' + encodeURIComponent($("#license").val().trim()) + '"}',
+					function (data, status) {
+                        var json = JSON.parse(decodeURIComponent(data));
+                        getLicenseInfo()
+                        showMessage(json, status);
+                    }, "text");
+            });
+			respondToVisibility('mediaView', function (mutationsList, observer) {
+				if (mutationsList.length > 0) {
+					var rec = mutationsList.at(0);
+					if (rec.target.className.indexOf('show') > -1) {
+						StartMediaListUpdater();
+					}
+					else {
+						StopMediaListUpdater();
+					}
+				}
+			});
+			respondToVisibility('casters', function (mutationsList, observer) {
+				if (mutationsList.length > 0) {
+					var rec = mutationsList.at(0);
+					if (rec.target.className.indexOf('show') > -1) {
+						getInputInterfaces('localInterfaces2');
+                        getMedia($("#dropdownFiles"));
+						startCurCasters();
+					}
+					else {
+						stopCurCasters();
+                    }
+				}
+			});
+			respondToVisibility('ip2hlsservers', function (mutationsList, observer) {
+				if (mutationsList.length > 0) {
+					var rec = mutationsList.at(0);
+					if (rec.target.className.indexOf('show') > -1) {
+						getInputInterfaces('localInterfaces');
+						startUpdating();
+					}
+					else {
+						stopUpdating();
+                    }
+				}
+			});
+            respondToVisibility('hlsservers', function (mutationsList, observer) {
+                if (mutationsList.length > 0) {
+                    var rec = mutationsList.at(0);
+                    if (rec.target.className.indexOf('show') > -1) {
+                        getMedia($("#dropdownFiles4HLS"));
+                        startFileHLSUpdating();
+                    }
+                    else {
+                        stopFileHLSUpdating();
+                    }
+                }
+            });
+			$("#shutdown").click(function () {
+                $('#shutdownQuestion').modal('toggle');
+				$.post("/",
+					'{ "command": "shutdown" }',
+					function (data, status) {
+                        var json = JSON.parse(decodeURIComponent(data));
+                        showMessage(json, status);
+                    }, "text");
+			});
+			$("#start").click(function () {
+				$.post("/",
+					getStartCommand(),
+					function (data, status) {
+                        var json = JSON.parse(decodeURIComponent(data));
+                        showMessage(json, status);
+                        if (JSON.stringify(json).includes("succeeded")) {
+							getPlayStatus();
+						}
+                    }, "text")
+			});
+            $("#startfile").click(function () {
+                $.post("/",
+                    getStartFileCommand(),
+					function (data, status) {
+                        var json = JSON.parse(decodeURIComponent(data));
+                        showMessage(json, status);
+                        if (JSON.stringify(json).includes("succeeded")) {
+                            getPlayStatus();
+                        }
+                    }, "text")
+            });
+			$("#File").change(function () {
+				var length = this.files.length;
+				if (!length) {
+					console.log("no file specified");
+				}
+				else if (this.files[0]) {
+					$("#fileSpinner").addClass("spinner-border spinner-border-sm");
+                    $("#fileLabel").text("Uploading");
+					var file = this.files[0].name;
+					var reader = new FileReader();
+					reader.onload = function (event) {
+						$.post("/",
+                            '{ "command": "fileUpload", "fileName":"' + file + '","data": "' + encodeURIComponent(btoa(event.target.result)) + '" }',
+							function (data, status) {
+                                var json = JSON.parse(decodeURIComponent(data));
+                                showMessage(json, status);
+								$("#File").val('');
+                                $("#fileSpinner").removeClass("spinner-border spinner-border-sm");
+                                $("#fileLabel").text("File input");
+                            }, "text");
+					};
+					//reader.readAsDataURL(this.files[0]);
+					reader.readAsBinaryString(this.files[0]);
+				}
+
+			});
+            $("#startsending").click(function () {
+                var file = $("#dropdownFiles").val().trim();
+                $.post("/",
+                    '{ "command": "startFileCaster", "fileName":"' + file + '", "localInterface":"' + $("#localInterfaces2").val().trim() +
+                    '", "outputAddress":"' + $("#address").val().trim() + '", "outputPort":' + $("#port").val().trim() +
+                    ', "bitrate": ' + $("#bitrate").val().trim() + '}',
+					function (data, status) {
+                        var json = JSON.parse(decodeURIComponent(data));
+                        showMessage(json, status);
+                        //if (JSON.stringify(data).includes("succeeded")) {
+                        //    getPlayStatus();
+                        //}
+                    }, "text")
+			})
+            $("#shutdownSystem").click(function () {
+                $('#shutdownQuestion').modal('toggle');
+            })
+		});
+		
+
+	</script>
+</head>
+
+    <body>
+		<div class="jumbotron text-center">
+			<div id="header" class="d-flex justify-content-end">
+				<div>
+					<button type="button" class="btn btn-danger btn-block close" id="shutdownSystem" aria-label="Close">
+						<span aria-hidden="true" title="Shutdown server">&times;</span>
+					</button>
+				</div>
+			</div>
+			<img class="img-left" type="image/png" src="favicon.png" width="40" />
+			<h1>Dualz HLS Server configuration</h1>
+			<div id="version"></div>
+			<div class="alert alert-secondary fade show col-12">
+				<div id="message"></div>
+			</div>
+		</div>
+		<div class="container-fluid">
+
+			<ul class="nav nav-pills nav-justified">
+				<li class="nav-item"><a class="nav-link active" data-toggle="pill" href="#hlsservers">File to HLS Applications</a></li>
+				<li class="nav-item"><a class="nav-link" data-toggle="pill" href="#ip2hlsservers">IP to HLS Applications</a></li>
+				<li class="nav-item"><a class="nav-link" data-toggle="pill" href="#casters">File Casters</a></li>
+				<li class="nav-item"><a class="nav-link" data-toggle="pill" href="#mediaView">Media</a></li>
+				<li class="nav-item"><a class="nav-link" data-toggle="pill" href="#systemView">System</a></li>
+			</ul>
+			<div class="tab-content">
+				<div id="hlsservers" class="tab-pane show active fade">
+					<div class="row">
+						<div class="col-sm-3">
+
+						</div>
+
+						<div class="col-sm-6">
+							<div class="card" id="inputConf">
+								<h6 class="card-header">Input configuration</h6>
+								<div class="card-body">
+									<div class="row2 col-12">
+										<label id="file_label">Select file to send</label>
+									</div>
+									<div class="row2 col-12">
+										<select class="custom-select" id="dropdownFiles4HLS">
+										</select>
+									</div>
+									<div class="row2 col-12">
+										<label id="video_codec_label">Select video codec for output</label>
+									</div>
+									<div class="row2 col-12">
+										<select class='custom-select IPParams' id='videoCodecFile'>
+											<option value="nvenc_h264">nvenc_h264 (nvidia gpu)</option>
+											<option value="h264_amf">h264_amf (amd gpu)</option>
+											<option value="h264_qsv">h264_qsv (intel gpu)</option>
+											<option value="libx264">libx264 (software)</option>
+											<option value="copy">copy</option>
+										</select>
+									</div>
+									<div class="row2 col-12">
+										<label id="audio_codec_label">Select audio codec for output</label>
+									</div>
+									<div class="row2 col-12">
+										<select class='custom-select IPParams' id='audioCodecFile'>
+											<option value="aac">AAC</option>
+											<option value="copy">copy</option>
+										</select>
+									</div>
+									<div class="row2 col-12">
+										<label id="App_Name_label">Name for HLS Folder</label>
+									</div>
+									<div><input class="col-12" id="App_Name_file" value="Knights" /></div>
+
+								</div>
+							</div>
+							<div class="card">
+								<div class="card-footer"><button id="startfile" class="btn-primary">Start generating</button></div>
+							</div>
+							<div class="card d-none " id="curFileHLSStream">
+								<h6 class="card-title">Current stream</h6>
+								<div class="card-body">
+									<div class="card-text ">
+										<table id="file_streams" class="table">
+											<thead>
+												<tr class="row">
+													<th class="col-2 text-center">streamid</th>
+													<th class="col-3 text-center">status</th>
+													<th class="col-4 text-center">filename</th>
+													<th class="col-3 text-center"></th>
+												</tr>
+											</thead>
+											<tbody></tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="ip2hlsservers" class="tab-pane fade">
+					<div class="row">
+						<div class="col-sm-3">
+
+						</div>
+
+						<div class="col-sm-6">
+							<div class="card" id="inputConf">
+								<h6 class="card-header">Input configuration</h6>
+								<div class="card-body">
+									<div class="row2 col-12">
+										<label id="localInterface_label">Select local network interface to receive input on</label>
+									</div>
+									<div class="row2 col-12"><select class='custom-select IPParams' id='localInterfaces'></select></div>
+									<div class="row2 col-12">
+										<label id="video_codec_label">Select video codec for output</label>
+									</div>
+									<div class="row2 col-12">
+										<select class='custom-select IPParams' id='videoCodec'>
+											<option value="nvenc_h264">nvenc_h264 (nvidia gpu)</option>
+											<option value="h264_amf">h264_amf (amd gpu)</option>
+											<option value="h264_qsv">h264_qsv (intel gpu)</option>
+											<option value="libx264">libx264 (software)</option>
+											<option value="copy">copy</option>
+										</select>
+									</div>
+									<div class="row2 col-12">
+										<label id="audio_codec_label">Select audio codec for output</label>
+									</div>
+									<div class="row2 col-12">
+										<select class='custom-select IPParams' id='audioCodec'>
+											<option value="aac">AAC</option>
+											<option value="copy">copy</option>
+										</select>
+									</div>
+									<div class="row2 col-12">
+										<label id="App_Name_label">Name for HLS Folder</label>
+									</div>
+									<div><input class="col-12" id="App_Name" value="Knights" /></div>
+									<div class="row2 col-12">
+										<label id="Input_URL_label">URL to receive data from</label>
+									</div>
+									<div><input class="col-12" id="Input_URL" value="udp://@235.5.5.5:5556" /></div>
+								</div>
+							</div>
+							<div class="card">
+								<div class="card-footer"><button id="start" class="btn-primary">Start generating</button></div>
+							</div>
+							<div class="card d-none " id="curStream">
+								<h6 class="card-title">Current stream</h6>
+								<div class="card-body">
+									<div class="card-text ">
+										<table id="streams" class="table">
+											<thead>
+												<tr class="row">
+													<th class="col-2 text-center">streamid</th>
+													<th class="col-2 text-center">status</th>
+													<th class="col-4 text-center">url</th>
+													<th class="col-3 text-center">local interface</th>
+													<th class="col-1 text-center"></th>
+												</tr>
+											</thead>
+											<tbody></tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="casters" class="tab-pane fade">
+					<div class="row">
+						<div class="col-sm-3">
+
+						</div>
+						<div class="col-sm-6">
+							<div class="card" id="fileConf">
+								<h6 class="card-header">Output configuration</h6>
+								<div class="card-body">
+									<div class="row2 col-12">
+										<label id="file_label">Select file to send</label>
+									</div>
+									<div class="row2 col-12">
+										<select class="custom-select" id="dropdownFiles">
+										</select>
+									</div>
+									<div class="row2 col-12">
+										<label id="Bitrate_label">Bitrate for filecaster</label>
+									</div>
+									<div><input class="col-12" id="bitrate" value="10000000" /></div>
+									<div class="row2 col-12">
+										<label id="localInterface_label">Select local network interface to send output on</label>
+									</div>
+									<div class="row2 col-12"><select class='custom-select IPParams' id='localInterfaces2'></select></div>
+									<div class="row2 col-12">
+										<label id="url_label">output address/port</label>
+									</div>
+									<div class="row2 col-6">
+										<input class="col-6" id="address" value="235.5.5.5" />
+										<input class="col-6" id="port" value="5556" />
+									</div>
+								</div>
+							</div>
+							<div class="card">
+								<div class="card-footer"><button id="startsending" class="btn-primary">Start sending</button></div>
+							</div>
+							<div class="card d-none " id="curCasters">
+								<h6 class="card-header">Current filecasters</h6>
+								<div class="card-body">
+									<div class="card-text ">
+										<table id="casters" class="table">
+											<thead>
+												<tr class="row">
+													<th class="col-2 text-center">file</th>
+													<th class="col-2 text-center">target</th>
+													<th class="col-2 text-center">bitrate</th>
+													<th class="col-2 text-center">status</th>
+													<th class="col-2 text-center">local interface</th>
+													<th class="col-1 text-center"></th>
+												</tr>
+											</thead>
+											<tbody></tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-sm-3">
+
+						</div>
+					</div>
+				</div>
+				<div id="mediaView" class="tab-pane fade">
+					<div class="row">
+						<div class="col-sm-3">
+
+						</div>
+
+						<div class="col-sm-6">
+							<div class="card">
+								<h6 class="card-header">Add Media file</h6>
+								<div class="card-body">
+									<div class="card-text">
+										<label for="File" class="form-label" id="fileLabel">File input</label><span class="" id="fileSpinner"></span>
+										<input class="form-control" type="file" id="File" />
+									</div>
+								</div>
+								<div class="card d-none" id="mediafiles">
+									<h6 class="card-header">Media files</h6>
+									<div class="card-body">
+										<div class="card-text ">
+											<table id="files" class="table">
+												<thead>
+													<tr class="row">
+														<th class="col-4 text-center">filename</th>
+														<th class="col-2 text-center">size</th>
+														<th class="col-4 text-center">date</th>
+														<th class="col-1 text-center"></th>
+													</tr>
+												</thead>
+												<tbody></tbody>
+											</table>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="systemView" class="tab-pane fade">
+					<div class="row">
+						<div class="col-sm-3">
+
+						</div>
+
+						<div class="col-sm-6">
+							<h6 class="card-header">License Info</h6>
+							<div class="card-body">
+								<div class="w-100"><label>Mac address</label></div>
+								<div class="w-100"><label id="MACAddress">eth0 interface not found or not active</label></div>
+								<div class="w-100"><label for="licenseInfo">License info </label><label id='licenseInfo'></label></div>
+								<div class="w-100"><textarea type="text" class="form-control" id="license" placeholder="license"></textarea></div>
+								<div class="w-100"><label></label></div>
+								<div class="w-100">
+									<button id="setLicense" class="btn btn-primary btn-block" name="setLicense">Set new license</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="snackbar"></div>
+			<div class="modal" tabindex="-1" role="dialog" id="shutdownQuestion" aria-hidden="true" data-backdrop="static">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title">Reset server</h5>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body">
+							<p>Are you sure you want to reset the HLS Server?</p>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-danger" id="shutdown">Reset server</button>
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+</body>
+</html>    
