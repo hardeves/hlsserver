@@ -74,7 +74,7 @@ parts:
     override-build: | 
       echo $(arch)
       ls -la
-      if [ "$(arch)" = "armv71" ]; then
+      if [ "$(arch)" = "armv7l" ]; then
         mkdir --parents $SNAPCRAFT_PART_INSTALL/usr/lib
         mv *.so* $SNAPCRAFT_PART_INSTALL/usr/lib
       fi
