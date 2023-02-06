@@ -22,7 +22,8 @@ parts:
     organize: 
       '*' : ./hlsserver/
     stage-packages: 
-      - libssl-dev
+      - openssl 
+      - ffmpeg
 
 
   install-hook:
@@ -58,16 +59,27 @@ parts:
     
   zixi:
     plugin: dump
-    source: 
-      - on amd64: ./zixi_linux.tar.gz
+    source: ./zixi_linux.tar.gz
     override-build: |
-      if [ "$SNAP_ARCH" = "amd64" ]; then
+      if [ "$(arch)" = "x86_64" ]; then
         mkdir --parents $SNAPCRAFT_PART_INSTALL/usr/lib
         mv ./Linux/*.so $SNAPCRAFT_PART_INSTALL/usr/lib
       fi
     organize: 
       'Linux/*.so*' : usr/lib/
-
+  
+  ssl:
+    plugin: dump
+    source: ./ssl 
+    override-build: | 
+      echo $(arch)
+      ls -la
+      if [ "$(arch)" = "armv71" ]; then
+        mkdir --parents $SNAPCRAFT_PART_INSTALL/usr/lib
+        mv *.so* $SNAPCRAFT_PART_INSTALL/usr/lib
+      fi
+    organize: 
+      'ssl/*.so*' : usr/lib/
 apps:
   hlsserver:
     command: hlsserver/HLSServer $SNAP_COMMON/hlsserver.conf

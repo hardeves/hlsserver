@@ -391,7 +391,10 @@
 			})
             $("#shutdownSystem").click(function () {
                 $('#shutdownQuestion').modal('toggle');
-            })
+			})
+            $("#activateTrial").click(function () {
+                activateTrial();
+            });
 		});
 		
 
@@ -678,6 +681,9 @@
 								<div class="w-100"><label></label></div>
 								<div class="w-100">
 									<button id="setLicense" class="btn btn-primary btn-block" name="setLicense">Set new license</button>
+								</div>
+								<div class="w-100">
+									<button id="activateTrial" class="btn btn-secondary btn-block" name="activateTrial">Activate trial</button>
 								</div>
 							</div>
 						</div>
