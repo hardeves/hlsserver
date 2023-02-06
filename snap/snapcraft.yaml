@@ -24,6 +24,8 @@ parts:
     stage-packages: 
       - openssl 
       - ffmpeg
+      - freeglut3
+      - libglu1-mesa
 
 
   install-hook:
