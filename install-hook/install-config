@@ -1,4 +1,7 @@
 #!/bin/sh
 if [ ! -d $SNAP_COMMON/hlsserver.conf ]; then
-    cp $SNAP/hlsserver/hlsserver.conf $SNAP_COMMON/hlsserver.conf
+    cp $SNAP/hlsserver/hlsserver_snap.conf $SNAP_COMMON/hlsserver.conf
+fi
+if [ ! -e $SNAP_USER_DATA/www ]; then
+    cp -R $SNAP/hlsserver/www $SNAP_USER_DATA/www
 fi
