@@ -70,18 +70,6 @@ parts:
     organize: 
       'Linux/*.so*' : usr/lib/
   
-  ssl:
-    plugin: dump
-    source: ./ssl 
-    override-build: | 
-      echo $(arch)
-      ls -la
-      if [ "$(arch)" = "armv7l" ]; then
-        mkdir --parents $SNAPCRAFT_PART_INSTALL/usr/lib
-        mv *.so* $SNAPCRAFT_PART_INSTALL/usr/lib
-      fi
-    organize: 
-      'ssl/*.so*' : usr/lib/
 apps:
   hlsserver:
     command: hlsserver/HLSServer $SNAP_COMMON/hlsserver.conf

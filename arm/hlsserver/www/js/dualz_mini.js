@@ -463,7 +463,7 @@ function createLine(elem) {
 function showLogs(data, tableName) {
     $("#" + tableName + " tr").slice(1).remove();
     var table = $('#' + tableName).find('tbody');
-    var arrayOfLines = data.split('\n').reverse();
+    var arrayOfLines = decodeURIComponent(data).split('\n').reverse();
     $.each(arrayOfLines, function (index, element) {
         if (element && !onlyWhiteSpace(element)) {
             table.append(createLine(element));

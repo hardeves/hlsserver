@@ -48,7 +48,7 @@
 				var label = $('<td class="col-2 text-center">' + value.uniqueID + '</td>');
 				var val = $('<td class="col-2 text-center">' + value.status + '</td>');
 				let variables = value.variables;
-				var address = variables.find(record => record.name === "Transcoder_inputURL").value;
+                var address = variables.find(record => record.name === "Transcoder_outputURL").value;
 				var localInterface = variables.find(record => record.name === "Transcoder_localInterface").value;
 				var interfaceCell = $('<td class="col-4 text-center">' + localInterface + '</td>');
 				var url = $('<td class="col-3 text-center">' + address + '</td>');
@@ -66,7 +66,7 @@
                 var label = $('<td class="col-2 text-center">' + value.uniqueID + '</td>');
                 var val = $('<td class="col-3 text-center">' + value.status + '</td>');
                 let variables = value.variables;
-                var address = variables.find(record => record.name === "Transcoder_inputURL").value;
+                var address = variables.find(record => record.name === "Transcoder_outputURL").value;
                 var url = $('<td class="col-4 text-center">' + address + '</td>');
                 var stop = $('<td class="col-3 text-center"><button class="btn btn-danger" onclick=StopStream(' + value.uniqueID + ') > Stop</td> ');
                 row.append(label, val, url, stop);
@@ -484,7 +484,7 @@
 												<tr class="row">
 													<th class="col-2 text-center">streamid</th>
 													<th class="col-3 text-center">status</th>
-													<th class="col-4 text-center">filename</th>
+													<th class="col-4 text-center">URL</th>
 													<th class="col-3 text-center"></th>
 												</tr>
 											</thead>
@@ -553,7 +553,7 @@
 												<tr class="row">
 													<th class="col-2 text-center">streamid</th>
 													<th class="col-2 text-center">status</th>
-													<th class="col-4 text-center">url</th>
+													<th class="col-4 text-center">URL</th>
 													<th class="col-3 text-center">local interface</th>
 													<th class="col-1 text-center"></th>
 												</tr>

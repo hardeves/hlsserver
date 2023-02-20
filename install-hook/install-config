@@ -2,6 +2,4 @@
 if [ ! -d $SNAP_COMMON/hlsserver.conf ]; then
     cp $SNAP/hlsserver/hlsserver_snap.conf $SNAP_COMMON/hlsserver.conf
 fi
-if [ ! -e $SNAP_USER_DATA/www ]; then
-    cp -R $SNAP/hlsserver/www $SNAP_USER_DATA/www
-fi
+mkdir -p $SNAP_COMMON/www/ && cp -R $SNAP/hlsserver/www/* $SNAP_COMMON/www/
